@@ -31,7 +31,7 @@ public class FileLoader {
 
 	@SneakyThrows
 	private Map<String, File> availableFiles() {
-		File directory = new File(ApplicationProperties.INSTANCE.getMDFilesPath().toURI());
+		File directory = Paths.get(ApplicationProperties.INSTANCE.getMDFilesPath().toURI()).toFile();
 
 		if (!directory.isDirectory()) {
 			log.error("Directory {} does not exist or is not an directory.", directory.getAbsolutePath());
