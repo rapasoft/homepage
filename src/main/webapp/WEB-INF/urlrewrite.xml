@@ -1,8 +1,8 @@
 
 <urlrewrite>
     <rule>
-        <from>/(.*)</from>
-        <to type="redirect">/(.*).html</to>
+        <from>/(.+)</from>
+        <to type="redirect">/$1.html</to>
     </rule>
     <!--
 
