@@ -9,11 +9,11 @@ import java.util.*
 class BlogEntryParser {
 
     companion object {
-        val TITLE_LINE = 0;
-        val PUBLISH_DATE_LINE = 3;
-        val CATEGORY_LINE = 4;
-        val CONTENT_START_LINE = 7;
-        val instance: BlogEntryParser = BlogEntryParser();
+        val TITLE_LINE = 0
+        val PUBLISH_DATE_LINE = 3
+        val CATEGORY_LINE = 4
+        val CONTENT_START_LINE = 7
+        val instance: BlogEntryParser = BlogEntryParser()
     }
 
     fun parse(lines: List<String>, fileName: String): BlogEntry {
