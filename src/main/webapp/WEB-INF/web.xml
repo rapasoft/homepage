@@ -6,15 +6,4 @@
             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
             metadata-complete="false">
 
-    <ns:filter>
-        <ns:filter-name>UrlRewriteFilter</ns:filter-name>
-        <ns:filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</ns:filter-class>
-    </ns:filter>
-    <ns:filter-mapping>
-        <ns:filter-name>UrlRewriteFilter</ns:filter-name>
-        <ns:url-pattern>/*</ns:url-pattern>
-        <ns:dispatcher>REQUEST</ns:dispatcher>
-        <ns:dispatcher>FORWARD</ns:dispatcher>
-    </ns:filter-mapping>
-
 </ns:web-app>

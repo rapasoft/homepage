@@ -15,7 +15,7 @@ class BlogPostGenerator {
   private companion object {
     val blogSourceIndexFile = File("./src/main/resources/index.html");
     val blogTargetIndexFile = File("./src/main/webapp/blog/index.html");
-    val targetDir = File("./src/main/webapp/blog/generated/")
+    val targetDir = File("./src/main/webapp/blog/posts/")
     val sourceDir = File("./src/main/resources/blog_posts/")
     val highlighterString = { title:String ->
       """
@@ -77,9 +77,9 @@ class BlogPostGenerator {
           indexHtml.getElementById("posts").append(
               """
                 <div class="post">
-                  <img class="post-avatar" src="./generated/${pair.first.fileName}.jpg" alt="${pair.first.fileName}" />
+                  <img class="post-avatar" src="./posts/${pair.first.fileName}.jpg" alt="${pair.first.fileName}" />
                   <h3 class="post-title">
-                    <a href="/${pair.first.fileName}">${pair.first.title}</a>
+                    <a href="/posts/${pair.first.fileName}.html">${pair.first.title}</a>
                   </h3>
                   <p class="post-description">
                     ${pair.first.perexifyContent(pair.first).content}
