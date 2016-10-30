@@ -73,25 +73,7 @@ class BlogPostGenerator {
 
     files
         .sortedByDescending { pair -> pair.first.published }
-        .forEach { pair ->
-          indexHtml.getElementById("posts").append(
-              """
-                <div class="post">
-                  <img class="post-avatar" src="./posts/${pair.first.fileName}.jpg" alt="${pair.first.fileName}" />
-                  <h3 class="post-title">
-                    <a href="/blog/posts/${pair.first.fileName}.html">${pair.first.title}</a>
-                  </h3>
-                  <p class="post-description">
-                    ${pair.first.perexifyContent()}
-                  </p>
-                  <div>
-                    ${pair.first.categories
-                  .map { "<span class=\"post-category\">${it}</span>" }
-                  .reduce { s1, s2 -> s1 + s2 }}
-                  </div>
-                </div>
-              """)
-        }
+        .forEach { pair -> indexHtml.getElementById("posts").append(post(pair)) }
 
     if (blogTargetIndexFile.exists()) {
       blogTargetIndexFile.delete();
@@ -100,6 +82,25 @@ class BlogPostGenerator {
     val fw = FileWriter(blogTargetIndexFile)
     fw.write(indexHtml.outerHtml())
     fw.close()
+  }
+
+  private fun post(pair: Pair<BlogEntry, Element>): String {
+    return """
+                  <div class="post">
+                    <img class="post-avatar" src="./posts/${pair.first.fileName}.jpg" alt="${pair.first.fileName}" />
+                    <h3 class="post-title">
+                      <a href="/blog/posts/${pair.first.fileName}.html">${pair.first.title}</a>
+                    </h3>
+                    <p class="post-description">
+                      ${pair.first.perexifyContent()}
+                    </p>
+                    <div>
+                      ${pair.first.categories
+        .map { "<span class=\"post-category\">${it}</span>" }
+        .reduce { s1, s2 -> s1 + s2 }}
+                    </div>
+                  </div>
+                """
   }
 
   private fun addMetaInformation(it: Pair<BlogEntry, Element>): Pair<BlogEntry, Element> {
@@ -140,7 +141,6 @@ class BlogPostGenerator {
         it.second
     )
   }
-
 
   private fun markdownToHtml(it: BlogEntry): Pair<BlogEntry, Document> =
       Pair(
