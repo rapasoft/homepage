@@ -10,7 +10,6 @@ class BlogEntryParser {
 
     companion object {
         val TITLE_LINE = 0;
-        val AUTHOR_LINE = 1;
         val PUBLISH_DATE_LINE = 3;
         val CATEGORY_LINE = 4;
         val CONTENT_START_LINE = 7;

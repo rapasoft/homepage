@@ -59,52 +59,35 @@
                 <executions>
                     <execution>
                         <id>compile</id>
+                        <phase>process-sources</phase>
                         <goals> <goal>compile</goal> </goals>
                         <configuration>
                             <sourceDirs>
                                 <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
-                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
                             </sourceDirs>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.5.0</version>
                 <executions>
-                    <!-- Replacing default-compile as it is treated specially by maven -->
                     <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>java-compile</id>
-                        <phase>compile</phase>
-                        <goals> <goal>compile</goal> </goals>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <phase>
+                            package
+                        </phase>
                     </execution>
                 </executions>
+                <configuration>
+                    <mainClass>eu.rapasoft.blog.Main</mainClass>
+                </configuration>
             </plugin>
-
-            <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>exec-maven-plugin</artifactId>-->
-                <!--<version>1.5.0</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<goals>-->
-                            <!--<goal>java</goal>-->
-                        <!--</goals>-->
-                        <!--<phase>-->
-                            <!--package-->
-                        <!--</phase>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<mainClass>eu.rapasoft.j.blog.Main</mainClass>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
         </plugins>
     </build>
 

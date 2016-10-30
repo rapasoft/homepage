@@ -17,7 +17,7 @@ class BlogPostGenerator {
     val blogTargetIndexFile = File("./src/main/webapp/blog/index.html");
     val targetDir = File("./src/main/webapp/blog/posts/")
     val sourceDir = File("./src/main/resources/blog_posts/")
-    val highlighterString = { title:String ->
+    val highlighterString = { title: String ->
       """
           <title>blog.rapasoft.eu | ${title}</title>
           <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -82,12 +82,12 @@ class BlogPostGenerator {
                     <a href="/blog/posts/${pair.first.fileName}.html">${pair.first.title}</a>
                   </h3>
                   <p class="post-description">
-                    ${pair.first.perexifyContent(pair.first).content}
+                    ${pair.first.perexifyContent()}
                   </p>
                   <div>
                     ${pair.first.categories
-                      .map { "<span class=\"post-category\">${it}</span>" }
-                      .reduce { s1, s2 -> s1 + s2 }}
+                  .map { "<span class=\"post-category\">${it}</span>" }
+                  .reduce { s1, s2 -> s1 + s2 }}
                   </div>
                 </div>
               """)
@@ -107,7 +107,7 @@ class BlogPostGenerator {
         .prepend("""
         <h1>${it.first.title}</h1>
         <p><span class=\"post-meta\">${it.first.published}</span></p>
-        <p>${it.first.categories.map { "<span class=\"post-category\">${it}</span>"}.reduce { s1, s2 -> s1 + s2 }}</p>
+        <p>${it.first.categories.map { "<span class=\"post-category\">${it}</span>" }.reduce { s1, s2 -> s1 + s2 }}</p>
         <hr />
       """);
     return Pair(
@@ -155,8 +155,4 @@ class BlogPostGenerator {
   }
 
 
-}
-
-fun main(args: Array<String>) {
-  BlogPostGenerator().generateBlogPosts()
 }
