@@ -1,0 +1,62 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Disable excesive logging in Spring Boot JUnit Integration Tests</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Disable excesive logging in Spring Boot JUnit Integration Tests</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2015/03/26</span></p> 
+  <p><span class="post-category">Spring</span><span class="post-category">Boot</span></p> 
+  <hr> 
+  <p>This was a major annoyance at first and couldn't find it anywhere, so when you want to write a SpringJUnit test for let's say Spring controller in Spring Boot similar to this:</p> 
+  <pre><code>		@RunWith(SpringJUnit4ClassRunner.class)
+		@WebAppConfiguration
+		@ContextConfiguration(classes = {Application.class})
+		public class IntegrationTest {
+		}
+</code></pre> 
+  <p>You might be surprised by the unnecessary amount of logging messages that cannot be tamed by your <code>application.properties</code> file. The culprit is logback library, so just put in <code>test/resources/logback-test.xml</code> this configuration and you should be good:</p> 
+  <pre><code>		&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+		&lt;configuration scan="true"&gt;
+			&lt;appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender"&gt;
+				&lt;encoder&gt;
+					&lt;charset&gt;utf-8&lt;/charset&gt;
+					&lt;Pattern&gt;[%p] %c - %m%n&lt;/Pattern&gt;
+				&lt;/encoder&gt;
+			&lt;/appender&gt;
+			&lt;logger name="ch.erni.community.ideasboard" level="DEBUG"/&gt;
+			&lt;logger name="org.springframework" level="OFF"/&gt;
+			&lt;logger name="org.apache.catalina.startup.DigesterFactory" level="OFF"/&gt;
+
+			&lt;root level="WARN"&gt;
+				&lt;appender-ref ref="CONSOLE"/&gt;
+			&lt;/root&gt;
+
+		&lt;/configuration&gt;
+</code></pre> 
+  <p>This is something that I will return to in the future, so I just wanted to have it here.</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/spring-boot-disable-logging';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'spring-boot-disable-logging'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

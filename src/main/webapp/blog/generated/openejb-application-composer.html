@@ -1,0 +1,141 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Integration testing EJBs with OpenEJB part 2: Application composer</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Integration testing EJBs with OpenEJB part 2: Application composer</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2015/01/15</span></p> 
+  <p><span class="post-category">Java</span></p> 
+  <hr> 
+  <p>Another way how to compose a testable module for OpenEJB embedded container is to use <a href="http://tomee.apache.org/examples-trunk/application-composer/README.html">application composer</a>.</p> 
+  <p>Using <code>ApplicationComposer</code> is similar to <a href="http://arquillian.org/">Arquillian</a> with <a href="http://arquillian.org/guides/shrinkwrap_introduction/">Shrinkwrap API</a>. It is a JUnit runner and you can basically create your own module that is necessary for test.</p> 
+  <p>The tutorial is pretty self explanatory, you just annotate integration test with <code>@RunWith(ApplicationComposer.class)</code> and provide module details using <code>@Module</code> annotations.</p> 
+  <pre><code>@RunWith(ApplicationComposer.class)
+public class MoviesTest extends TestCase {
+
+    @EJB
+    private Movies movies;
+
+    @Resource
+    private UserTransaction userTransaction;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Module
+    public PersistenceUnit persistence() {
+        ...
+    }
+
+    @Module
+    public EjbJar beans() {
+        ...
+    }
+
+    @Configuration
+    public Properties config() throws Exception {
+        ...
+    }
+
+    @Test
+    public void test() throws Exception {
+        ...
+    }
+}
+</code></pre> 
+  <p>With this simple API you can prepare your own Helper class that you can use to build your modules. This is basically as a future reference for me:</p> 
+  <pre><code>public class ApplicationComposerHelper {
+
+    public static final String MODEL_PACKAGE = "eu.rapasoft.blog.model";
+    public static final String APPLICATION_NAME = "test-app";
+    public static final String PERSISTENCE_UNIT = "test";
+
+    public static EjbJar createEjbJar(List&lt;Class&gt; statelessBeans, List&lt;Class&gt; statefulBeans) {
+        EjbJar ejbJar = new EjbJar(APPLICATION_NAME);
+        for (Class statelessBeanClass : statelessBeans) {
+            ejbJar.addEnterpriseBean(new StatelessBean(statelessBeanClass));
+        }
+        for (Class statefulBean : statefulBeans) {
+            ejbJar.addEnterpriseBean(new StatefulBean(statefulBean));
+        }
+
+        return ejbJar;
+    }
+
+    public static PersistenceUnit createPersistenceUnit() {
+        PersistenceUnit unit = new PersistenceUnit(PERSISTENCE_UNIT);
+        unit.setJtaDataSource("test");
+        unit.setNonJtaDataSource("testUnmanaged");
+        List&lt;Class&gt; modelClasses = new ArrayList&lt;&gt;();
+        try {
+            modelClasses.addAll(getAllClasses(Package.getPackage(MODEL_PACKAGE).getName()));
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        for (Class modelClass : modelClasses) {
+            unit.getClazz().add(modelClass.getName());
+        }
+        unit.setProperty("openjpa.jdbc.SynchronizeMappings", "buildSchema(ForeignKeys=true)");
+        unit.setProperty("openjpa.Log", "DefaultLevel=WARN, Runtime=INFO, Tool=INFO, SQL=TRACE");
+        return unit;
+    }
+
+    public static Properties createConfig() {
+        Properties p = new Properties();
+        p.put("test", "new://Resource?type=DataSource");
+        p.put("test.JdbcDriver", "org.hsqldb.jdbcDriver");
+        p.put("test.JdbcUrl", "jdbc:hsqldb:mem:test");
+        return p;
+    }
+
+    private static List&lt;Class&gt; getAllClasses(String pckgname) throws ClassNotFoundException {
+
+        ArrayList&lt;Class&gt; classes = new ArrayList&lt;&gt;();
+        File directory;
+        try {
+            directory = new File(Thread.currentThread().getContextClassLoader().getResource(pckgname.replace('.', '/')).getFile());
+        } catch (NullPointerException x) {
+            throw new ClassNotFoundException(pckgname + " does not appear to be a valid package");
+        }
+        if (directory.exists()) {
+            String[] files = directory.list();
+            for (String file : files) {
+                if (file.endsWith(".class")) {
+                    classes.add(Class.forName(pckgname + '.' + file.substring(0, file.length() - 6)));
+                }
+            }
+        } else {
+            throw new ClassNotFoundException(pckgname + " does not appear to be a valid package");
+        }
+
+        return classes;
+    }
+
+
+}
+</code></pre>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/openejb-application-composer';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'openejb-application-composer'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

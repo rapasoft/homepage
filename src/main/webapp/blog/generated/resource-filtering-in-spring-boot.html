@@ -1,0 +1,54 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Resource filtering in Spring Boot not working</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Resource filtering in Spring Boot not working</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2015/12/24</span></p> 
+  <p><span class="post-category">Java</span><span class="post-category">Spring</span><span class="post-category">Boot</span></p> 
+  <hr> 
+  <p>Title can be misleading, but it is the only one thing that annoyed user would search for when trying to figure out this problem.</p> 
+  <p>The reason it is "not working" lies in Spring Boot's parent pom file. When you explore it you will stumble upon something like this:</p> 
+  <pre><code>		&lt;plugin&gt;
+			&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+			&lt;artifactId&gt;maven-resources-plugin&lt;/artifactId&gt;
+			&lt;version&gt;2.6&lt;/version&gt;
+			&lt;configuration&gt;
+				&lt;delimiters&gt;
+					&lt;delimiter&gt;${resource.delimiter}&lt;/delimiter&gt;
+				&lt;/delimiters&gt;
+				&lt;useDefaultDelimiters&gt;false&lt;/useDefaultDelimiters&gt;
+			&lt;/configuration&gt;
+		&lt;/plugin&gt;
+</code></pre> 
+  <p>So, okay, the default ${.*} pattern is replaced by something else, in this case:</p> 
+  <pre><code>		&lt;resource.delimiter&gt;@&lt;/resource.delimiter&gt; &lt;!-- delimiter that doesn't clash with Spring ${} placeholders --&gt;
+</code></pre> 
+  <p>This is a nasty little fella, since it is not so obvious and it overrides the global config of maven-resource-plugin. I was wondering why my custom.properties file is not being filtered and this was the culprit. So just for future generation and my future self, define filterable properties like this (for example in properties file)</p> 
+  <pre><code>		property=@your.property@
+</code></pre>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/resource-filtering-in-spring-boot';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'resource-filtering-in-spring-boot'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

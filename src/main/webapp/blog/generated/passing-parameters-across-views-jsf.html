@@ -1,0 +1,161 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Passing parameters across views in JSF</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Passing parameters across views in JSF</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2014/12/23</span></p> 
+  <p><span class="post-category">JSF</span></p> 
+  <hr> 
+  <p>Even though not so popular and hip nowadays, JSF is still a very powerful framework for building web applications. You can do many things using simple code constructs. But sometimes it can be real brain-teaser since there are several ways to achieve one thing. One of those is a problem of navigating across views and passing parameters between them.</p> 
+  <h5>The problem</h5> 
+  <p>Imagine situation when you have one view that is represented by a xhtml facelet page and <code>@ViewScoped</code> JSF Managed Bean. This can be a product catalog with a several items organized in datatable. Clicking on one item would navigate you to another view, let's call it detailed view, which has also its own xhtml and <code>@ViewScoped</code> bean.</p> 
+  <p>The navigation steps are simple: User opens the page with list of items, picks one and opens a detailed view.</p> 
+  <h5>Approach</h5> 
+  <p>There are several ways how to approach this but I have found that using <a href="https://javaserverfaces.java.net/nonav/docs/2.0/javadocs/javax/faces/context/Flash.html"><strong>Flash scope</strong></a> suits me the best. This way you can store some parameters that will survive multiple HTTP requests until they are retrieved in the next view.</p> 
+  <p>This is what the first view looks like:</p> 
+  <pre><code>&lt;h:body&gt;
+    &lt;h:form&gt;
+        &lt;h1&gt;&lt;h:outputText value="#{viewScopedBean.someMessage}"/&gt;&lt;/h1&gt;
+
+        &lt;h:commandButton value="Just navigate to the meaning of life" action="#{viewScopedBean.showProduct(42)}"/&gt;
+
+        &lt;p:commandButton update="@form" value="Just refresh form" /&gt;
+    &lt;/h:form&gt;
+&lt;/h:body&gt;
+</code></pre> 
+  <p>I have added a simple PrimeFaces refresh button that will update the form using ajax call just to see that the bean is not recreated each time. I will get to this later.</p> 
+  <p>The backing bean is simple as well:</p> 
+  <pre><code>@ManagedBean @ViewScoped
+public class ViewScopedBean implements Serializable {
+
+    private Logger logger = Logger.getLogger(ViewScopedBean.class.getName());
+
+    private String someMessage = "Wazzup";
+
+    @ManagedProperty("#{jsfHelper}")
+    private JsfHelper jsfHelper;
+
+    @PostConstruct
+    public void init() {
+        logger.info("ViewScopedBean initiated " + jsfHelper.currentPhase());
+    }
+
+    public String showProduct(int productId) {
+        logger.info("AnotherViewScopedBean init " + jsfHelper.currentPhase());
+        jsfHelper.setFlash(JsfHelper.Constants.PRODUCT_ID, productId);
+        return "meaning_of_life?faces-redirect=true";
+    }
+
+    public String getSomeMessage() {
+        return someMessage;
+    }
+
+    public void setJsfHelper(JsfHelper jsfHelper) {
+        this.jsfHelper = jsfHelper;
+    }
+}
+</code></pre> 
+  <p><code>JsfHelper</code> class is a <code>@ApplicationScoped</code> bean, which only serves to handle some simple JSF-related tasks and it is more for the demonstration purposes. There are methods for getting the current JSF Phase, and methods for working with flash scope. They are really simple:</p> 
+  <pre><code>@ManagedBean @ApplicationScoped
+public class JsfHelper implements Serializable{
+
+	public String currentPhase() {
+		return "["+FacesContext.getCurrentInstance().getCurrentPhaseId().getName() + "]";
+	}
+
+	public void setFlash(String key, Object value) {
+		FacesContext.getCurrentInstance().getExternalContext().getFlash().put(key, value);
+	}
+
+	public Object getFlash(String key) {
+		return FacesContext.getCurrentInstance().getExternalContext().getFlash().get(key);
+	}
+
+	public static class Constants {
+		public static final String PRODUCT_ID = "prodId";
+	}
+
+}
+</code></pre> 
+  <p>So, before we navigate to the next view we set the value of <code>PRODUCT_ID</code> to the one that was passed as a method parameter. <code>PRODUCT_ID</code> is defined in a inner static class of constants for more clarity. Another thing to notice here is that flash scope will survive even when <code>faces-redirect</code> is set to <code>true</code>, which is basically the desired situation most of the time.</p> 
+  <p>Here is the code for the second view. You can see that there is another button for refreshing the form via ajax.</p> 
+  <pre><code>&lt;h:body&gt;
+    &lt;h:form&gt;
+        &lt;h1&gt;The meaning of life is &lt;h:outputText id="meaningOfLife" value="#{anotherViewScopedBean.meaningOfLife}"/&gt;&lt;/h1&gt;
+
+        &lt;p:commandButton update="@form" value="Really?" /&gt;
+    &lt;/h:form&gt;
+&lt;/h:body&gt;
+</code></pre> 
+  <p>and backing bean:</p> 
+  <pre><code>@ManagedBean @ViewScoped
+public class AnotherViewScopedBean implements Serializable {
+
+    private Logger logger = Logger.getLogger(AnotherViewScopedBean.class.getName());
+
+    private Integer meaningOfLife;
+
+    @ManagedProperty("#{jsfHelper}")
+    private JsfHelper jsfHelper;
+
+    @PostConstruct
+    public void init() {
+        logger.info("AnotherViewScopedBean init " + jsfHelper.currentPhase());
+        meaningOfLife = (Integer) jsfHelper.getFlash(JsfHelper.Constants.PRODUCT_ID);
+    }
+
+    public String getMeaningOfLife() {
+        logger.info("AnotherViewScopedBean meaningOfLife " + jsfHelper.currentPhase());
+        return "[" + meaningOfLife + "]";
+    }
+
+    public void setJsfHelper(JsfHelper jsfHelper) {
+        this.jsfHelper = jsfHelper;
+    }
+}
+</code></pre> 
+  <h5>What's going on in the background</h5> 
+  <p>The output of our logging statements will make my case:</p> 
+  <p>When the first page is loaded:</p> 
+  <pre><code>15:21:35,983 INFO  [eu.rapasoft.viewscoped.ViewScopedBean] (default task-12) ViewScopedBean initiated [RENDER_RESPONSE]
+</code></pre> 
+  <p>When we navigate to the second view using button:</p> 
+  <pre><code>15:21:37,925 INFO  [eu.rapasoft.viewscoped.ViewScopedBean] (default task-18) AnotherViewScopedBean init [INVOKE_APPLICATION]
+15:21:37,962 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-19) AnotherViewScopedBean init [RENDER_RESPONSE]
+</code></pre> 
+  <p>When we push the update button on a second page several times:</p> 
+  <pre><code>15:21:39,966 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-19) AnotherViewScopedBean meaningOfLife [RENDER_RESPONSE]
+15:21:41,030 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-20) AnotherViewScopedBean meaningOfLife [RENDER_RESPONSE]
+15:21:41,532 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-21) AnotherViewScopedBean meaningOfLife [RENDER_RESPONSE]
+15:21:41,735 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-22) AnotherViewScopedBean meaningOfLife [RENDER_RESPONSE]
+15:21:41,939 INFO  [eu.rapasoft.viewscoped.AnotherViewScopedBean] (default task-23) AnotherViewScopedBean meaningOfLife [RENDER_RESPONSE]
+</code></pre> 
+  <p>So, no been creation, just direct method call.</p> 
+  <h5>After thoughts</h5> 
+  <p>Flash scope was introduced in JSF 2.0, together with <code>@ViewScoped</code> scope, but there is one glitch if you are using JSF version older than 2.2. Be sure to read <a href="http://balusc.blogspot.sk/2010/06/benefits-and-pitfalls-of-viewscoped.html">this perfect article</a> by JSF expert <a href="http://stackoverflow.com/users/157882/balusc">BalusC</a>.</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/passing-parameters-across-views-jsf';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'passing-parameters-across-views-jsf'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

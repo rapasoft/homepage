@@ -1,0 +1,211 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Integration testing EJBs with OpenEJB</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Integration testing EJBs with OpenEJB</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2015/01/08</span></p> 
+  <p><span class="post-category">Java</span></p> 
+  <hr> 
+  <p>When it comes to testing Integration tests are natural way to verify if "everything works together". Integration tests in Java EE environment can be a bit tricky, since for most desired services you'll need an EJB container. There are already several different solutions, among the most popular is <a href="http://arquillian.org/">Arquillian</a>. However, my personal experience with Arquillian is not so bright, so I looked for another solution - <a href="http://tomee.apache.org/">OpenEJB</a>, popularized by Apache TomEE.</p> 
+  <p>I will demonstrate it on a simple Maven project. The main <code>pom.xml</code> should contain dependencies on a OpenEJB libraries:</p> 
+  <pre><code>&lt;dependencies&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.apache.openejb&lt;/groupId&gt;
+        &lt;artifactId&gt;javaee-api&lt;/artifactId&gt;
+        &lt;version&gt;6.0-6&lt;/version&gt;
+        &lt;scope&gt;provided&lt;/scope&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.apache.openejb&lt;/groupId&gt;
+        &lt;artifactId&gt;openejb-core&lt;/artifactId&gt;
+        &lt;version&gt;4.7.1&lt;/version&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.hibernate.javax.persistence&lt;/groupId&gt;
+        &lt;artifactId&gt;hibernate-jpa-2.0-api&lt;/artifactId&gt;
+        &lt;version&gt;1.0.0.Final&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.hibernate&lt;/groupId&gt;
+        &lt;artifactId&gt;hibernate-core&lt;/artifactId&gt;
+        &lt;version&gt;4.2.0.Final&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.hibernate&lt;/groupId&gt;
+        &lt;artifactId&gt;hibernate-entitymanager&lt;/artifactId&gt;
+        &lt;version&gt;4.2.0.Final&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;junit&lt;/groupId&gt;
+        &lt;artifactId&gt;junit&lt;/artifactId&gt;
+        &lt;version&gt;4.10&lt;/version&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+
+&lt;/dependencies&gt;
+</code></pre> 
+  <p>The <code>javaee-api</code> is provided by the application server (Apache TomEE), but there's also <code>openejb-core</code> needed for the Integration tests, so it is there with a <code>test</code> scope. I've switched the OpenJPA implementation to Hibernate, since I think it is more usable (and I have better experience with Hibernate than with OpenJPA when it comes to stability).</p> 
+  <p>Next, there are two simple classes. One <code>Entity</code> class...</p> 
+  <pre><code>@Entity
+public class Process {
+
+    @Id
+    private Integer id;
+
+    private String name;
+
+    public Process() {
+    }
+
+    public Process(String name, Integer id) {
+        this.name = name;
+        this.id = id;
+    }
+}
+</code></pre> 
+  <p>...and one <code>Stateless</code> session bean that will simulate some business method that manipulates this entity.</p> 
+  <pre><code>@Stateless
+public class SimpleService {
+
+    @PersistenceContext(name = "test")
+    private EntityManager entityManager;
+
+    public void saveProcess(Process process) {
+        entityManager.persist(process);
+    }
+
+}
+</code></pre> 
+  <p>Be sure that you have a <code>persistence.xml</code> with correct settings. I've made some for the demonstration purposes:</p> 
+  <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;persistence xmlns="http://java.sun.com/xml/ns/persistence" version="1.0"&gt;
+    &lt;persistence-unit name="default"&gt;
+        &lt;provider&gt;org.hibernate.ejb.HibernatePersistence&lt;/provider&gt;
+
+        &lt;jta-data-source&gt;java:/DefaultDS&lt;/jta-data-source&gt;
+
+        &lt;properties&gt;
+
+            &lt;property name="hibernate.hbm2ddl.auto" value="create-drop"/&gt;
+            &lt;property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect" /&gt;
+
+        &lt;/properties&gt;
+
+    &lt;/persistence-unit&gt;
+&lt;/persistence&gt;
+</code></pre> 
+  <p>The <code>DefaultDS</code> is provided by the application server and it uses <code>hsqldb</code> in-memory database. So, nothing fancy.</p> 
+  <p>Now, it is time to create a test</p> 
+  <pre><code>public class SimpleServiceIntegrationTest {
+
+    @EJB
+    private SimpleService simpleService;
+
+    @Before
+    public void init() throws NamingException {
+        Context context = EJBContainer.createEJBContainer().getContext();
+        context.bind("inject",this);
+    }
+
+    @Test
+    public void testSaveProcess() throws Exception {
+        Process process = new Process("Test", 1);
+
+        simpleService.saveProcess(process);
+    }
+
+}
+</code></pre> 
+  <p>This is the simplest way, how to inject your service into integration test. You can provide <code>Properties</code> parameter when creating EJB container, where you can override your default settings in <code>persistence.xml</code>, which is handy when working with test database. This is basicall described <a href="http://tomee.apache.org/examples-trunk/testing-transactions/README.html">in this article</a> from the Apache TomEE examples.</p> 
+  <p>It works well,... until you try to create another integration test. Imagine situation where there exists another one with the name <code>AnotherIntegrationTest</code> that has the same contents as the class above. When running all tests in Maven you will end up with something like this:</p> 
+  <pre><code>INFO - EJBContainer already initialized.  Call ejbContainer.close() to allow reinitialization
+
+org.apache.openejb.Injector$NoInjectionMetaDataException: eu.rapasoft.blog.AnotherIntegrationTest :
+Annotate the class with @javax.annotation.ManagedBean so it can be discovered in the application scanning process
+</code></pre> 
+  <p>Which is clearly non-sense and it looks like a bug. You can follow the instructions and annotate the test class with <code>@ManagedBean</code>, which will work in Maven. But I had some problems running it inside IDE, so I don't think this is a solution. However, the workaround for this is (sigh) using JNDI lookup:</p> 
+  <pre><code>public class SimpleServiceIntegrationTest {
+
+    private SimpleService simpleService;
+
+    @Before
+    public void init() throws NamingException {
+        Context context = EJBContainer.createEJBContainer().getContext();
+        simpleService = (SimpleService) context.lookup("java:global/OpenEJBIntegrationTesting/SimpleService");
+    }
+
+    @Test
+    public void testSaveProcess() throws Exception {
+        Process process = new Process("Test", 1);
+
+        simpleService.saveProcess(process);
+    }
+
+}
+</code></pre> 
+  <p>When you lookup a service like this, the tests run without any problems. It looks nasty, but there exists a different aproach, which I'll tackle in my next post. Meanwhile, be sure to check Apache TomEE documentation and examples!</p> 
+  <p><em>EDIT:</em> I've got an email from Aliaxei Voitsik in which he points out that to overcome the problem mentioned above one just needs to explicitly close <code>EJBContainer</code> after each test, like this:</p> 
+  <pre><code>public class SimpleServiceIntegrationTest {
+
+	@EJB
+	private SimpleService simpleService;
+
+	private Context context;
+
+	private EJBContainer ejbContainer;
+
+	@Before
+	public void init() throws NamingException {
+		ejbContainer = EJBContainer.createEJBContainer();
+		context = ejbContainer.getContext();
+		context.bind("inject",this);
+	}
+
+	@Test
+	public void testSaveProcess() throws Exception {
+		Process process = new Process("Test", 2);
+
+		simpleService.saveProcess(process);
+	}
+
+	@After
+	public void destroy() {
+		ejbContainer.close();
+	}
+
+}
+</code></pre> 
+  <p>Many thanks for that!</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/openejb-integration-testing';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'openejb-integration-testing'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

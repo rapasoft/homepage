@@ -1,0 +1,81 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Kotlin gotcha's</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Kotlin gotcha's</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2016/02/21</span></p> 
+  <p><span class="post-category">Kotlin</span></p> 
+  <hr> 
+  <p>You have plenty of JVM-based languages to choose from, like Scala, Groovy, Clojure, Ceylon,... and I could go on. There is one another, which just recently hit the major version 1.0.0 and it is Kotlin.</p> 
+  <p>Kotlin is developed by JetBrains, which is responsible for many successful products like IntelliJ IDEA, TeamCity, YouTrack and so on. I don't want to give you the tutorial to Kotlin, since it is <a href="https://kotlinlang.org/docs/reference/">well documented on their website</a> and you can even try it <a href="http://try.kotlinlang.org/">within your browser</a>. They are also claiming that version 1.0.0 is production ready and you can even <a href="https://spring.io/blog/2016/02/15/developing-spring-boot-applications-with-kotlin">build Spring Boot application</a> using Kotlin. That is a nice claim and I sure wanted to try it out. There are few gotchas, however, and I would like to share my experience.</p> 
+  <h3>Color scheme</h3> 
+  <p>First of all, you will need an IDE that supports Kotlin well. I am an avid IntelliJ IDEA user, therefore this was my first choice. Version 15 has a nice support but you can use older versions with the Kotlin plugin as well. Here I must mention that in version 14.1.6 with Kotlin plugin and Darcula theme the colors are not distinguished very well (e.g. special words and annotations are in the same color). But this is just a minor issue which can be changed by custom color schema.</p> 
+  <h3>Compiler version in Maven repository</h3> 
+  <p>Next thing was very odd compilation errors when I was trying to use the same code within several computers. One day the code compiled, the second day not. I was using Maven for dependency management and only thing that helped me was to clear the <code>org.jetbrains.*</code> directory in my <code>~/.m2/repository/</code> and let the Maven download the Kotlin compiler once again. Maybe version 1.0.0 was updated several times in the repository without changing the version number?</p> 
+  <h3>Code completion in IDEA</h3> 
+  <p>Sometimes it is difficult to complete the code - especially if you are switching from Java - because you have to write the variable name before you specify the type. Sometime there are hints, if you name your variables as lowercase class names, e.g. <code>extractionService : ExtractionService</code> but I've encountered that it is not working well by default. Another thing is entering parameters in for example annotations. Pressing <code>Ctrl + Space</code> will give you list of everything but the things you need (e.g. the parameters that are needed for this annotation). Luckily <code>Ctrl + P</code> works for this purpose well, but it's a unnecessary keystroke.</p> 
+  <h3>Annotations</h3> 
+  <p>If you read the Spring Boot tutorial it was already mentioned there, but I will repeat it as well since it annoys me a lot. If you have an annotation that accepts varargs like <code>@ContextConfiguration(classes = TestApplication.class)</code> you have to explicitly define it as array, e.g. <code>@ContextConfiguration(classes = arrayOf(TestApplication::class))</code>. This becomes especially annoying if you need to declare several nested ones, like in Spring, where it is pretty common to have this:</p> 
+  <pre><code>@ComponentScan(basePackages = arrayOf("eu.rapasoft.kotlin"), excludeFilters = arrayOf(
+		Filter(Controller::class, type = FilterType.ANNOTATION),
+		Filter(RestController::class, type = FilterType.ANNOTATION),
+		Filter(pattern = arrayOf(".*SwaggerConfig"), type = FilterType.REGEX)))
+</code></pre> 
+  <p>I know this is a "tax" for Java interoperability but it would be nice to have this a bit nicer in the next versions.</p> 
+  <h3>Data classes and Hibernate entities</h3> 
+  <p>Data class is an especially nice feature which lets you build simple data structures easily. If you are thinking about use case where you use it as Hibernate entities, than let's have a look:</p> 
+  <pre><code> @Entity
+ data class DailyMenuSourcePage(
+		 @Id val restaurantName: String,
+		 val url: String,
+		 @Column(columnDefinition = "varchar(1000)") val soupsPath: String?,
+		 @Column(columnDefinition = "varchar(1000)") val mainDishesPath: String?,
+		 @Column(columnDefinition = "varchar(1000)") val otherPath: String?)
+</code></pre> 
+  <p>Seems nice, you can easily define the entity without any getter/setters, they are automatically generated for you (something similar like <code>@Data</code> annotation in <a href="https://projectlombok.org/">Project Lombok</a>). The main problem here is that Hibernate requires a no-args constructor, which isn't available here, since this definition only let's you build new instance entering all parameters. You could therefore either ditch data class, or hack it:</p> 
+  <pre><code>@Entity
+data class DailyMenuSourcePage(
+		@Id val restaurantName: String,
+		val url: String,
+		@Column(columnDefinition = "varchar(1000)") val soupsPath: String?,
+		@Column(columnDefinition = "varchar(1000)") val mainDishesPath: String?,
+		@Column(columnDefinition = "varchar(1000)") val otherPath: String?) {
+		constructor() : this("", "", "", "", "")
+}
+</code></pre> 
+  <p>Here we provide the default values for no-args constructor. This is only possible if you know what you are doing and allow creation of such an objects. Sometimes it is not that easy to create default values, especially if you are using relations heavily.</p> 
+  <h3>The "private static final LOG"</h3> 
+  <p>One thing that unfortunately doesn't work well with Kotlin is above-mentioned project Lombok. I was used to "inject" Slf4j loggers into class using <code>@Slf4j</code> annotation. Since Kotlin doesn't have notion of "static" this is understandable. Here, you have to use this construct to define Logger:</p> 
+  <pre><code> companion object {
+     val LOG: org.slf4j.Logger = LoggerFactory.getLogger(MenuExtractorServiceImpl::class.java.name)
+ }
+</code></pre> 
+  <p>Yes, using companion object. It is somewhat awkward, but this is how the language was designed,...</p> 
+  <h3>It is not all that bad</h3> 
+  <p>There are other minor quirks, but in general it is a very pleasant experience to use Kotlin and I would definitely recommend at least trying it for your personal projects. I am experimenting with simple app that would extract daily menus from the restaurants near our work, you can view the <a href="https://github.com/rapasoft/AtEleven">sources on my Github page</a>. ;)</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/kotlin-gotchas';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'kotlin-gotchas'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

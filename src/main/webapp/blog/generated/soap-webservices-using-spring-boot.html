@@ -1,0 +1,189 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | SOAP WebServices made easily with Spring Boot</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>SOAP WebServices made easily with Spring Boot</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2015/06/01</span></p> 
+  <p><span class="post-category">Java</span><span class="post-category">Spring</span><span class="post-category">Boot</span><span class="post-category">SOAP</span></p> 
+  <hr> 
+  <p>I know, SOAP-based web services are not cool, but in enterprise world they are still popular since SOAP is well documented and robust and it's been here forever. Recently I have received an assignment to create simple SOAP endpoints. JAVA EE and JAX-WS would be a good choice, but I've decided to stick with Spring WS with Spring Boot as the super-glue.</p> 
+  <p>The assignment covered these topics:</p> 
+  <ul> 
+   <li>Create two endpoints that would return list of query results based on simple filtering</li> 
+   <li>Use WS-Security for basic authentication</li> 
+  </ul> 
+  <p>Following <a href="https://spring.io/guides/gs/producing-web-service/">the official tutorial</a>, I have started with an empty Maven project adding all the dependencies and preliminary configurations (Spring Boot Application main class, WebService configuration etc.). Next task was creating XSD file with the definition of transfer objects. For brevity, let's assume the definition of transfer object looks like this:</p> 
+  <pre><code>        &lt;xs:complexType name="sampleDto"&gt;
+            &lt;xs:sequence&gt;
+                &lt;xs:element minOccurs="1" maxOccurs="1" name="id" type="xs:int"/&gt;
+                &lt;xs:element name="sample_name" type="xs:string"/&gt;
+                &lt;xs:element name="description" type="xs:string"/&gt;
+                &lt;xs:element minOccurs="0" name="date_added" type="xs:date"/&gt;
+            &lt;/xs:sequence&gt;
+        &lt;/xs:complexType&gt;
+</code></pre> 
+  <p>Next topic was generating classes from the XSD file. For this <a href="http://mojo.codehaus.org/jaxb2-maven-plugin/">Maven JAXB2 plugin</a> is the obvious choice. It is easy to setup and configuration options are really wide. Classes are generated using XJC generator - but the first problem that I encountered I already explained <a href="http://blog.rapasoft.eu/xjc_and_jdk8">in this previous post</a>. XJC needs to have special permissions so that it can work correctly, enough said.</p> 
+  <p>Second problem with generation of classes was the <code>xs:date</code> type, which produces <code>XMLGregorianCalendar</code>-typed fields instead of more widely spread <code>java.util.Date</code>. For this, custom binding and adapter must be created to successfully convert these date types. First of all, a simple <code>DateAdapter</code> class must be made with two methods that will convert the <code>Date</code> to <code>String</code> and vice-versa:</p> 
+  <pre><code>         public class DateAdapter {
+         
+            public static Date parseDate(String s) {
+                return DatatypeConverter.parseDate(s).getTime();
+            }
+         
+            public static String printDate(Date dt) {
+                Calendar cal = new GregorianCalendar();
+                cal.setTime(dt);
+                return DatatypeConverter.printDate(cal).split("\\+")[0];
+            }
+         
+         }
+</code></pre> 
+  <p>Then, the binding definition file (<code>jaxb-custom-binding.xml</code>) must be created so that the <code>xs:date</code> is properly converted:</p> 
+  <pre><code>          &lt;bindings xmlns="http://java.sun.com/xml/ns/jaxb" version="2.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+            &lt;globalBindings&gt;
+                &lt;javaType name="java.util.Date" xmlType="xs:date"
+                          parseMethod="com.scor.norda.webservice.util.DateAdapter.parseDate"
+                          printMethod="com.scor.norda.webservice.util.DateAdapter.printDate"
+                        /&gt;
+            &lt;/globalBindings&gt;
+          &lt;/bindings&gt;
+</code></pre> 
+  <p>Ok, close enough, but there is still one thing missing - to be able to use these generated classes for example as DTOs in JPA we need to have all-args constructor present for this class. This can be also setup easily with <code>jaxb2-value-constructor</code> by setting one Maven property <code>xjc.arguments</code>. An excerpt from pom.xml with relevant parts (together with jaxb2 setup) would look like this:</p> 
+  <pre><code>        ...
+
+        &lt;properties&gt;
+            &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+            &lt;xjc.arguments&gt;-Xvalue-constructor&lt;/xjc.arguments&gt;
+        &lt;/properties&gt;
+        
+        ...
+        
+        &lt;plugin&gt;
+              &lt;groupId&gt;org.codehaus.mojo&lt;/groupId&gt;
+              &lt;artifactId&gt;jaxb2-maven-plugin&lt;/artifactId&gt;
+              &lt;version&gt;1.6&lt;/version&gt;
+              &lt;executions&gt;
+                  &lt;execution&gt;
+                      &lt;id&gt;xjc&lt;/id&gt;
+                      &lt;phase&gt;generate-sources&lt;/phase&gt;
+                      &lt;goals&gt;
+                          &lt;goal&gt;xjc&lt;/goal&gt;
+                      &lt;/goals&gt;
+                  &lt;/execution&gt;
+              &lt;/executions&gt;
+              &lt;configuration&gt;
+                  &lt;schemaDirectory&gt;${project.basedir}/src/main/resources/&lt;/schemaDirectory&gt;
+                  &lt;outputDirectory&gt;${project.basedir}/src/main/jaxb&lt;/outputDirectory&gt;
+                  &lt;packageName&gt;eu.rapasoft.webservice.dto&lt;/packageName&gt;
+                  &lt;clearOutputDir&gt;false&lt;/clearOutputDir&gt;
+                  &lt;!-- TODO: IMPORTANT! You need to execute Maven goal with -Djavax.xml.accessExternalSchema=all VM arguments --&gt;
+                  &lt;!-- SEE: http://stackoverflow.com/questions/23011547/webservice-client-generation-error-with-jdk8 --&gt;
+                  &lt;bindingDirectory&gt;${project.basedir}/src/main/resources&lt;/bindingDirectory&gt;
+                  &lt;bindingFiles&gt;jaxb-custom-binding.xml&lt;/bindingFiles&gt;
+              &lt;/configuration&gt;
+              &lt;dependencies&gt;
+                  &lt;dependency&gt;
+                      &lt;groupId&gt;org.jvnet.jaxb2_commons&lt;/groupId&gt;
+                      &lt;artifactId&gt;jaxb2-value-constructor&lt;/artifactId&gt;
+                      &lt;version&gt;3.0&lt;/version&gt;
+                  &lt;/dependency&gt;
+              &lt;/dependencies&gt;
+          &lt;/plugin&gt;
+</code></pre> 
+  <p>With all this ready, the generated classes are ready to be used directly as DTOs in JPA queries (e.g. <code>select new eu.rapasoft.dto.SampleDto(...) from ...</code>).</p> 
+  <p>The endpoint itself is really easy. With Spring WS you just create properly annotated class:</p> 
+  <pre><code>        @Endpoint(value = "sample")
+        public class SampleEndpoint {
+        
+            @Autowired
+            private SampleRepository sampleRepository;
+        
+            @PayloadRoot(namespace = NamespaceConstants.NAMESPACE_URI, localPart = "sampleRequest")
+            @ResponsePayload
+            public SampleResponse getDtos(@RequestPayload SampleRequest sampleRequest) {
+                List&lt;SampleDto&gt; legalEntityOmegaMappingDtos = sampleRepository.fetchAll();
+        
+                return new SampleResponse(legalEntityOmegaMappingDtos);
+            }
+        
+        }
+</code></pre> 
+  <p>As I wrote in the introduction, next step would be adding simple WS-Security basic authentication. A relevant part of code for this is hidden in Spring Boot configuration class (where also other WS-related settings are defined):</p> 
+  <pre><code>        @EnableWs
+        @Configuration
+        public class WebServiceConfiguration extends WsConfigurerAdapter {
+        
+            ...
+            // Other WS-related settings
+            ...
+        
+            @Bean
+            public XwsSecurityInterceptor securityInterceptor() {
+                XwsSecurityInterceptor securityInterceptor = new XwsSecurityInterceptor();
+                securityInterceptor.setCallbackHandler(callbackHandler());
+                securityInterceptor.setPolicyConfiguration(new ClassPathResource("securityPolicy.xml"));
+                return securityInterceptor;
+            }
+        
+            @Bean
+            SimplePasswordValidationCallbackHandler callbackHandler() {
+                SimplePasswordValidationCallbackHandler callbackHandler = new SimplePasswordValidationCallbackHandler();
+                // TODO @rap: Use real username and passwords
+                callbackHandler.setUsersMap(Collections.singletonMap("user", "password"));
+                return callbackHandler;
+            }
+        
+            @Override
+            public void addInterceptors(List&lt;EndpointInterceptor&gt; interceptors) {
+                interceptors.add(securityInterceptor());
+            }
+            
+        }
+</code></pre> 
+  <p>The <code>securityPolicy.xml</code> file (placed in resources directory) can look like this:</p> 
+  <pre><code>        &lt;xwss:SecurityConfiguration xmlns:xwss="http://java.sun.com/xml/ns/xwss/config"&gt;
+        	&lt;xwss:RequireUsernameToken passwordDigestRequired="false" nonceRequired="false" /&gt;
+        &lt;/xwss:SecurityConfiguration&gt;
+</code></pre> 
+  <p>As you can see, no enhanced encryption, just basic authentication which combined with secure chanel (SSL) should suffice for internal use. The envelope that is being send as a request should contain headers with username/password:</p> 
+  <pre><code>        &lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+            &lt;soapenv:Header&gt;
+                &lt;wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" soapenv:mustUnderstand="1"&gt;
+                    &lt;wsse:UsernameToken&gt;
+                        &lt;wsse:Username&gt;user&lt;/wsse:Username&gt;
+                        &lt;wsse:Password&gt;password&lt;/wsse:Password&gt;
+                    &lt;/wsse:UsernameToken&gt;
+                &lt;/wsse:Security&gt;
+            &lt;/soapenv:Header&gt;
+            &lt;soapenv:Body&gt;
+                ...
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;
+</code></pre> 
+  <p>And that's basically it. This is just a rough overview, more sense would make viewing the whole source code ;), therefore I have prepared a <a href="https://github.com/rapasoft/SoapWS">sample GitHub</a> (without the DB connection and JPA stuff, to decrease complexity a bit).</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/soap-webservices-using-spring-boot';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'soap-webservices-using-spring-boot'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>

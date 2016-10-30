@@ -172,7 +172,17 @@ Now the actual fun starts. Let's say you want to send `POST` request to your RES
       error: (xhr, status, err) => handleError(xhr, status, err)
     });
     
-This, obviously, does not work resulting in error message similar to this `{"timestamp":1458804129690,"status":403,"error":"Forbidden","message":"Missing or non-matching CSRF-token","path":"/rest/resource"}`. This is our CSRF protection working, checking and not finding the token. 
+This, obviously, does not work resulting in error message similar to this:
+
+    {
+       "timestamp":1458804129690,
+       "status":403,
+       "error":"Forbidden",
+       "message":"Missing or non-matching CSRF-token",
+       "path":"/rest/resource"
+    }
+
+This is our CSRF protection working, checking and not finding the token.
 
 To implement double submit cookie protection we need, well, send the cookie twice. Once as a request parameter and once as a request cookie.
 We are going to create cookie on the client, which will be unique for each new request. The function I've used [can be found on this Gist](https://gist.github.com/jed/982883):
