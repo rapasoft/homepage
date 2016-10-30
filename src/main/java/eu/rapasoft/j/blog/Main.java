@@ -1,4 +1,4 @@
-package eu.rapasoft.blog;
+package eu.rapasoft.j.blog;
 
 import eu.rapasoft.blog.service.BlogPostGenerator;
 
