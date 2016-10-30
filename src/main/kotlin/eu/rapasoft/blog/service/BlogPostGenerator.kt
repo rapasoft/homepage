@@ -79,7 +79,7 @@ class BlogPostGenerator {
                 <div class="post">
                   <img class="post-avatar" src="./posts/${pair.first.fileName}.jpg" alt="${pair.first.fileName}" />
                   <h3 class="post-title">
-                    <a href="/posts/${pair.first.fileName}.html">${pair.first.title}</a>
+                    <a href="/blog/posts/${pair.first.fileName}.html">${pair.first.title}</a>
                   </h3>
                   <p class="post-description">
                     ${pair.first.perexifyContent(pair.first).content}
