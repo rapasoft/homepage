@@ -5,7 +5,9 @@
 - Kotlin
 - publish
 
-I've just recently organized a workshop to popularize the Kotlin programming language. I like Kotlin a lot, but I cannot say I mastered it entirely, so this was quite a challenge for me. I like to push my boundaries a bit further every now and then and since presenting in front of group of people is not something that I do every day. I consider this to be the best proof that individual truly understands the topic. And also, knowing something does not necessarily mean one will be good at explaining it. So as this blog mainly serves as a vault for my acquired knowledge I've created a lessons learned list to avoid mistakes and on the other hand reuse patterns that were successful.
+I've just recently organized a workshop to popularize the Kotlin programming language. I like Kotlin a lot, but I cannot say I mastered it entirely, so this was quite a challenge for me. I like to push my boundaries a bit further every now and then and since presenting in front of group of people is not something that I do every day. I consider this to be the best proof that individual truly understands the topic. And also, knowing something does not necessarily mean one will be good at explaining it. 
+
+So as this blog mainly serves as a vault for my acquired knowledge I've created a lessons learned list to avoid mistakes and on the other hand reuse patterns that were successful.
 
 - Stop **trying to put too much scope into single session.** This is a quite tricky point, since it is hard to estimate the difficulty in the eyes of a unopinionated viewer. The best would be to create a target user profile and estimate a time range in which he would be able to solve it. 
 - Also, more is less, so it's always good to create simple exercise with optional tasks for those that are _smarter_.
@@ -19,3 +21,5 @@ I've just recently organized a workshop to popularize the Kotlin programming lan
 - Prepare the workshop in a way that users that cannot participate can work on the assignments on their own. For example write a [github-pages](https://rapasoft.github.io/KotlinHackathon/) documentation.
 
 If you are reading this and have something to add, do not hesitate to leave a comment.
+
+Also, don't forget to checkout the workshop's description at [https://rapasoft.github.io/KotlinHackathon](https://rapasoft.github.io/KotlinHackathon/)
