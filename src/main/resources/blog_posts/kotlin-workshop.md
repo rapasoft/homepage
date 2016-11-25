@@ -15,5 +15,7 @@ I've just recently organized a workshop to popularize the Kotlin programming lan
 - Gather feedback in a non-intrusive way. No-one likes feedback forms, so either start a discussion or chat during the coffee break.
 - Limit the group of people to a reasonable amount. For one presenter 15 people is a lot, but 8-10 is optimal.
 - Be friendly and relaxed. It should be 'fun', if possible :)
+- Use [social media](https://www.facebook.com/events/232826593798117/) to promote the event. If there are any developer groups try to spread the event information around.
+- Prepare the workshop in a way that users that cannot participate can work on the assignments on their own. For example write a [github-pages](https://rapasoft.github.io/KotlinHackathon/) documentation.
 
 If you are reading this and have something to add, do not hesitate to leave a comment.
