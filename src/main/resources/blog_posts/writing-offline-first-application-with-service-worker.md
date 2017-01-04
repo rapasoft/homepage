@@ -5,7 +5,7 @@
 - JavaScript ServiceWorker
 
 
-With more devices connected Internet is more and more required resource. Web applications are providing rich content and not only written information. But what if the connection is not available, shouldn't you be possible to access information that was already provided to you? Writing applications that are optimized for offline usage increases user's experience and ensures that she will use it regularly.
+With more devices connected, the Internet is more and more required resource. Web applications are providing rich content, not only written information. But what if the connection is not available, shouldn't you be possible to access information that was already provided to you? Writing applications that are optimized for offline usage increases user's experience, thus usage of your application.
 
 Are you familiar with [devdocs.io](http://devdocs.io/)? It's my "the most favorite page" last year not only because it aggregates most of the documentation I use on a regular basis, but also because it's available offline. How does one achieve that? Well, you can simple use Cache API available in modern browsers.
 
@@ -80,6 +80,6 @@ Lastly, we need to intercept the `fetch` event, in order to return correct respo
       );
     });
 
- You can find the full [sources on my github page](https://github.com/rapasoft/angular-webpack/tree/43880e4d4abf51b7a76430b59b246c51826e14ef). You won't be able to run the application fully, because of missing backend logic (websocket and image-api). But feel free to experiment with it ;).
+ You can find the full [sources on my github page](https://github.com/rapasoft/angular-webpack/tree/43880e4d4abf51b7a76430b59b246c51826e14ef). Event though the backend logic is missing (websocket and image-api) you will be able to start (`npm install && npm start`) the application.
 
  This topic was also part of my [TechTalk at Itera](https://www.facebook.com/IteraSlovakia/?fref=ts) so you can view the [slides from the presentation](https://drive.google.com/open?id=0B-rChDQV9i87bHhFR2ZFUTVRWGc) as well.
