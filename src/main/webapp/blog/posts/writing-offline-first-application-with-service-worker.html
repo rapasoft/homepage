@@ -1,0 +1,101 @@
+<html>
+ <head> 
+  <title>blog.rapasoft.eu | Writing offline-first web applications with Service Worker API</title> 
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+  <meta name="author" content="Pavol Rajzak"> 
+  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+ </head>
+ <body> 
+  <h1>Writing offline-first web applications with Service Worker API</h1> 
+  <p><span class="\&quot;post-meta\&quot;">2017/01/04</span></p> 
+  <p><span class="post-category">JavaScript</span><span class="post-category">ServiceWorker</span></p> 
+  <hr> 
+  <p>With more devices connected Internet is more and more required resource. Web applications are providing rich content and not only written information. But what if the connection is not available, shouldn't you be possible to access information that was already provided to you? Writing applications that are optimized for offline usage increases user's experience and ensures that she will use it regularly.</p> 
+  <p>Are you familiar with <a href="http://devdocs.io/">devdocs.io</a>? It's my "the most favorite page" last year not only because it aggregates most of the documentation I use on a regular basis, but also because it's available offline. How does one achieve that? Well, you can simple use Cache API available in modern browsers.</p> 
+  <p>For example, you would like to cache the responses of requests that fetch static assets (e.g. images, styles, scripts), so that you can view them when offline. It is described in the next image:</p> 
+  <p><img src="https://lh3.googleusercontent.com/U3dqxrVj5T_GdEiLLv3qW5BR1W2mqHfS8291vJSg0_Uph8zje_JOU1dKREhAGPUAvARebMBzgrM=w1389-h780-no" alt="Using Cache"></p> 
+  <p>In order to load the site, browser calls a <code>GET</code> request (1) that as a response (2) returns static asset, which is put in cache and also used to render the page. Once the network is not available (3), the response comes from cache (4).</p> 
+  <p>Using the Cache API is, however, awkward, it would require a lot of overhead just to manage the persisting and updating cache. The solution to that is to use <a href="https://developer.mozilla.org/en/docs/Web/API/Service_Worker_API">Service Worker API</a>. You can read the <a href="https://developers.google.com/web/fundamentals/getting-started/primers/service-workers">introductory article</a>, which basically describes everything you want to know.</p> 
+  <p>But let's return to our real-world-example. The frontend app will "cache" itself when <code>install</code> event is processed by service worker. Only after that it will allow the rest of the application to be processed (<code>activate</code> event).</p> 
+  <p><img src="https://lh3.googleusercontent.com/_5yfGJucO_nfVewt7kFGgrOGh0ifYvcr-Zek6YB2GkbNrobeqcY9aPiIPqo5zdRaCPAhmDttjMjgopQWsrXdb_1AqAv2NDJ-MsAzfMQOAZ0Qor9kPTmk_RCQem4Z6rIL3Iisdq5XtoQWy2bV4kBU8RhkvINxsdKSX4FWZnYznyQtwNnDpsyX0ww0P09_nurxLSUvouLsirw70EuPqgFDICUtHJ0j979Nka8w0DEdJlwDG8w3L5OFfkx9Wuy1HwxQWXG7wi_1Td6pLQTVfaQ5c1MfhHFUvf_nDgKdGj46COj1eMeFwJljBu3fmVM7K_Mr1qklqVUvNMs_hKaL708qgHvx0aLRVwv4fdw92Ao__Ft3ESnpCbYUj2DmMQmf6KzrHz3CuTNLsBFProvc7Q-ri9K2MhLFGw3jKFvxeSgq4U9CW96E2ciI6KkHE8YsGDXhwjF7wp1P7-kLAsDGNk9DGZyf5r_UMNvcsuk9CH1equE1oUoOSTMcffCgMPRUQqr3OKORORSYycRBQwwwNecI_KgQlnodKytB3qaku3tjqsa6RJAynyhO21aSWAI79FW5VB_Wnu_Qd31nxbySTwDZv8RTgtMMZXH1T3dZQIEBVCKZkJuDR7gnOQ25Vf03d9aRMc9IjzNfrFiEpF5pYfL44L8P23dFMs-USe3-0sUekDo=w1440-h583-no" alt="Service Worker registration and activation"></p> 
+  <p>Now, we will force the application to read from the cache first and only if it is not found the resource is loaded form the internet (e.g. cache first strategy for static resources).</p> 
+  <p><img src="https://lh3.googleusercontent.com/pv1xj-aRAA_I5UaI1BJXwiBCBp1jiQHa0fks0qEV9fUQ4YsuLO9K6e5d9pZIHMZRcejFVqesLNvSh4khJyf4LxgktIA76JwRqHJEApokRZmU_HqlfbGThQzUqhyEtLV_HGTekW_X9_4GFZrNtbsV_jw2Uk5k-QZGH33S6m0GFL92JAVkNQjUx2_e4c4jPuJ24jbT77bC4INOvqt3qeZVNo-rTpJnGtrkhy4NBgYZuPtB9lihZneUvgQxTxdgxlEKG3m0F1gJ8xYgYHFjl83wT_6HemSlkXhOHI0Pob5UEBkglnuXLPVnneZMaw9LAkt--L6jQVZ1oeQg25E8KJKigdFIE3l1hkc3st0bvXRBzK_-9U5kGA_z69mlLN4-jGk3xWEYc3vM_uU9AagEpR0OAhli1lfzlCWztpPhlU2U64NLFi7cOxtvIITZjckmJDy9gVPA4RYWzcruq2xt_lSD-Xm6ingXJV9r2aOwL-hMF0VJBoxssjIoofpDOaIIw04JVx8-2CHJJ9GMg3xO9KfVyHRzfcxVuMikqhz3P_H-7PC1IZQhvrWqG3osoI3YVC8IqOqpM2sZIDjJkLgfCO3cVogHlK4OmS_6m-Ik1kNoXi8bISVLrhMTpynILs--rsYZ_OckovrUURTbwCl8YzU_Wch2xJ0VY2rEwrQNzbKdtrg=w1382-h780-no" alt="Service worker read from cache "></p> 
+  <p>We will implement this in an Angular 1.6 application to view images from a gallery. The service method that fetches the images from gallery has a fallback to show just a "image not found" temporary image if request is not succesful:</p> 
+  <blockquote> 
+   <p>/src/app/slideshow/slideshow-service.js</p> 
+  </blockquote> 
+  <pre><code>...
+getPhotos(page = 0) {
+  return this.httpService
+    .get(`/api/random-image/list?page=${page}`)
+    .then(result =&gt; result.data)
+    .then(images =&gt; images.map((image) =&gt; new Image(image.name, image.url)))
+    .catch(() =&gt; [new Image('', '/img/notfound.png')]);
+}
+...
+</code></pre> 
+  <p>In order to make <code>/img/notfound.png</code> available offline we need to cache it.</p> 
+  <blockquote> 
+   <p>/src/app/service-worker.js</p> 
+  </blockquote> 
+  <pre><code>const CACHE_NAME = 'angular-test-cache';
+const STATIC_ASSETS = [
+  '/',
+  '/app.bundle.js',
+  '/img/notfound.png',
+  '/img/favicon.ico'
+];
+
+self.addEventListener('install', (event) =&gt;
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =&gt; {
+        log(['Static assets added to cache: ', STATIC_ASSETS]);
+        return cache.addAll(STATIC_ASSETS);
+      })
+  )
+);
+</code></pre> 
+  <p>Lastly, we need to intercept the <code>fetch</code> event, in order to return correct response (cached "notfound" image):</p> 
+  <blockquote> 
+   <p>/src/app/service-worker.js</p> 
+  </blockquote> 
+  <pre><code>self.addEventListener('fetch', (event) =&gt; {
+  event.respondWith(
+    caches
+      .match(event.request)
+      .then((response) =&gt; {
+        if (response) {
+          log([event.request.url, 'Retrieved from cache']);
+          return response;
+        }
+        return fetch(event.request).catch(() =&gt; log(['An error has occured']));
+      })
+  );
+});
+</code></pre> 
+  <p>You can find the full <a href="https://github.com/rapasoft/angular-webpack/tree/43880e4d4abf51b7a76430b59b246c51826e14ef">sources on my github page</a>. You won't be able to run the application fully, because of missing backend logic (websocket and image-api). But feel free to experiment with it ;).</p> 
+  <p>This topic was also part of my <a href="https://www.facebook.com/IteraSlovakia/?fref=ts">TechTalk at Itera</a> so you can view the <a href="https://drive.google.com/open?id=0B-rChDQV9i87bHhFR2ZFUTVRWGc">slides from the presentation</a> as well.</p>  
+  <div id="disqus_thread"></div> 
+  <script>
+            var disqus_config = function () {
+                this.page.url = 'http://blog.rapasoft.eu/writing-offline-first-application-with-service-worker';  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = 'writing-offline-first-application-with-service-worker'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//blograpasofteu.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script> 
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+ </body>
+</html>
