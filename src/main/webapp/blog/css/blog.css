@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300');
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    width: 80%;
+    margin: 0 auto;
+}
+
+p {
+    letter-spacing: 0.05em;
+}
+
+h1 {
+    margin-top: 1em;
+}
+
+h1, .post-meta {
+    text-align: center;
+}
+
+.post-meta {
+    width: 100%;
+    font-size: 1.5em;
+}
+
+.post-meta, .post-category {
+    display: inline-block;
+}
+
+.post-category {
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+.post-category {
+    border-radius: 5px;
+    background: whitesmoke;
+}
+
+img {
+    max-width: 50%;
+    margin: 2em auto;
+    display: block;
+}
+
+@media screen and (max-width: 800px) {
+    body {
+        width: 95%;
+    }
+
+    img {
+        max-width: 80%;
+    }
+}

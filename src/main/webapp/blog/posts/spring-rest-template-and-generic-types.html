@@ -3,14 +3,14 @@
   <title>blog.rapasoft.eu | Spring RestTemplate and generic types</title> 
   <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
   <meta name="author" content="Pavol Rajzak"> 
-  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="../css/blog.css"> 
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
   <script>hljs.initHighlightingOnLoad();</script> 
  </head>
  <body> 
   <h1>Spring RestTemplate and generic types</h1> 
-  <p><span class="\&quot;post-meta\&quot;">2015/12/25</span></p> 
+  <p class="post-meta">2015/12/25</p> 
   <p><span class="post-category">Spring</span><span class="post-category">RestTemplate</span></p> 
   <hr> 
   <p>Using Spring's <a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html">RestTemplate</a> is sometimes more convenient than using JAX-RS implementations. Usually you have Jackson2 on classpath, so JSON to object deserialization is working out of box. But what about parameterized collections like <code>List&lt;T&gt;</code>?</p> 

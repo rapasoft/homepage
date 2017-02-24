@@ -24,7 +24,7 @@ class BlogPostGenerator {
           <title>blog.rapasoft.eu | ${title}</title>
           <meta name="viewport" content="initial-scale=1, maximum-scale=1">
           <meta name="author" content="Pavol Rajzak" />
-          <link rel="stylesheet" href="../css/styles.css">
+          <link rel="stylesheet" href="../css/blog.css">
           <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css">
           <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
           <script>hljs.initHighlightingOnLoad();</script>
@@ -109,7 +109,7 @@ class BlogPostGenerator {
         it.second.getElementsByTag("body").first()
                 .prepend("""
         <h1>${it.first.title}</h1>
-        <p><span class=\"post-meta\">${it.first.published}</span></p>
+        <p class="post-meta">${it.first.published}</p>
         <p>${it.first.categories.map { "<span class=\"post-category\">${it}</span>" }.concat()}</p>
         <hr />
       """)

@@ -3,14 +3,14 @@
   <title>blog.rapasoft.eu | Stateless Double Submit Cookie CSRF protection with Spring/jQuery (with CORS, of course)</title> 
   <meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
   <meta name="author" content="Pavol Rajzak"> 
-  <link rel="stylesheet" href="../css/styles.css"> 
+  <link rel="stylesheet" href="../css/blog.css"> 
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css"> 
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script> 
   <script>hljs.initHighlightingOnLoad();</script> 
  </head>
  <body> 
   <h1>Stateless Double Submit Cookie CSRF protection with Spring/jQuery (with CORS, of course)</h1> 
-  <p><span class="\&quot;post-meta\&quot;">2016/03/24</span></p> 
+  <p class="post-meta">2016/03/24</p> 
   <p><span class="post-category">Java</span><span class="post-category">Spring</span><span class="post-category">jQuery</span><span class="post-category">CORS</span><span class="post-category">CSRF</span><span class="post-category">REST</span></p> 
   <hr> 
   <p>Common approach on writing modern web applications is to have different technology stack for backend and frontend and let them communicate via RESTful web services. This decoupling, however, may introduce a security issue where attacker uses man-in-middle attack to eavesdrop on communication and inject malicious code. In other words <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">cross-site request forgery</a>. There are multiple ways how to implement protection against these kinds of attacks, like adding hidden input field with CSRF token to every form. But what if we don't generate forms on the server and are rather using stateless REST services?</p> 
