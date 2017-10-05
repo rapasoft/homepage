@@ -380,3 +380,46 @@ h4 {
         margin-top: 35px
     }
 }
+
+@media print {
+    .header {
+        display: none;
+    }
+
+    .profile-photo {
+        display: none;
+    }
+
+    .hobbies-section {
+        display: none;
+    }
+
+    .footer {
+        display: none;
+    }
+
+    body {
+        overflow: visible;
+        height: auto;
+    }
+
+    a[href]:after { content: none !important; }
+
+    .skills {
+        display: none;
+    }
+
+    .section {
+        padding-top: 5px;
+        padding-bottom: 0;
+    }
+
+    .certifications {
+        page-break-before: always;
+    }
+
+    .education .col-lg-6 {
+        float: left;
+    }
+
+}
